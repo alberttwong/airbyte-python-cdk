@@ -470,11 +470,18 @@ def test_run_discover_with_exception(entrypoint: AirbyteEntrypoint, mocker, spec
         ] == messages
 
 
-def test_run_read(entrypoint: AirbyteEntrypoint, mocker, spec_mock, config_mock):
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"data": "stuff"},
+        {"nullable": None, "nested": {"x": None}, "items": [None, {"y": None}]},
+    ],
+)
+def test_run_read(entrypoint: AirbyteEntrypoint, mocker, spec_mock, config_mock, data):
     parsed_args = Namespace(
         command="read", config="config_path", state="statepath", catalog="catalogpath"
     )
-    expected = AirbyteRecordMessage(stream="stream", data={"data": "stuff"}, emitted_at=1)
+    expected = AirbyteRecordMessage(stream="stream", data=data, emitted_at=1)
     mocker.patch.object(MockSource, "read_state", return_value={})
     mocker.patch.object(MockSource, "read_catalog", return_value={})
     mocker.patch.object(
@@ -487,6 +494,10 @@ def test_run_read(entrypoint: AirbyteEntrypoint, mocker, spec_mock, config_mock)
         orjson.dumps(AirbyteMessageSerializer.dump(MESSAGE_FROM_REPOSITORY)).decode(),
         _wrap_message(expected),
     ] == messages
+    assert orjson.loads(messages[-1]) == {
+        "type": "RECORD",
+        "record": {"stream": "stream", "data": data, "emitted_at": 1},
+    }
     assert spec_mock.called
 
 

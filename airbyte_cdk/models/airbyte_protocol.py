@@ -6,9 +6,17 @@ from dataclasses import InitVar, dataclass
 from typing import Annotated, Any, Dict, List, Mapping, Optional, Union
 
 from airbyte_protocol_dataclasses.models import *  # noqa: F403  # Allow '*'
-from serpyco_rs.metadata import Alias
+from airbyte_protocol_dataclasses.models import AirbyteRecordMessage as _AirbyteRecordMessage
+from serpyco_rs.metadata import Alias, KeepNone
 
 # ruff: noqa: F405  # ignore fuzzy import issues with 'import *'
+
+
+@dataclass
+class AirbyteRecordMessage(_AirbyteRecordMessage):
+    # Record data is arbitrary JSON: explicit nulls must survive even when
+    # optional protocol-envelope fields are omitted by the serializer.
+    data: Annotated[Dict[str, Any], KeepNone]
 
 
 @dataclass
