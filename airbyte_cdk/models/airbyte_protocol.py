@@ -6,7 +6,8 @@ from dataclasses import InitVar, dataclass
 from typing import Annotated, Any, Dict, List, Mapping, Optional, Union
 
 from airbyte_protocol_dataclasses.models import *  # noqa: F403  # Allow '*'
-from serpyco_rs.metadata import Alias
+from airbyte_protocol_dataclasses.models import AirbyteRecordMessage as ProtocolAirbyteRecordMessage
+from serpyco_rs.metadata import Alias, KeepNone
 
 # ruff: noqa: F405  # ignore fuzzy import issues with 'import *'
 
@@ -48,6 +49,13 @@ class AirbyteStateBlob:
             if not isinstance(other, AirbyteStateBlob)
             else bool(self.__dict__ == other.__dict__)
         )
+
+
+@dataclass
+class AirbyteRecordMessage(ProtocolAirbyteRecordMessage):
+    # Record data is an arbitrary JSON payload. Keep explicit nulls even when
+    # the serializer omits unset optional protocol fields.
+    data: Annotated[Dict[str, Any], KeepNone]
 
 
 # The following dataclasses have been redeclared to include the new version of AirbyteStateBlob
